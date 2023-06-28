@@ -1,0 +1,31 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <ui:VisualElement name="doc-window">
+        <ui:VisualElement name="header" class="search-bar">
+            <ui:Label text="Search" style="width: 50px;"></ui:Label>
+            <ui:TextField name="search-query" style="flex-grow: 1;"></ui:TextField>
+        </ui:VisualElement>
+        <ui:VisualElement name="content" style="flex-direction: row;">
+            <ui:ScrollView name="left-scroll-view" class="scroll-view">
+                <ui:ListView name="name-list" item-height="16" selection-type="Single"></ui:ListView>
+            </ui:ScrollView>
+            <ui:ScrollView name="right-scroll-view" class="scroll-view">
+                <ui:VisualElement name="class-details">
+                    <ui:Label name="class-name" class="main-header"></ui:Label>
+                    <ui:Label name="class-description" class="normal-text"></ui:Label>
+                    <ui:Label name="fields-heading" class="subheading" text="Fields"></ui:Label>
+                    <ui:ScrollView name="properties-scroll-view" class="scroll-view">
+                        <ui:VisualElement name="properties-list">
+                            <!-- Add a ui:Label for each field description here -->
+                        </ui:VisualElement>
+                    </ui:ScrollView>
+                    <ui:Label name="methods-heading" class="subheading" text="Methods"></ui:Label>
+                    <ui:ScrollView name="methods-scroll-view" class="scroll-view">
+                        <ui:VisualElement name="methods-list">
+                            <!-- Add a ui:Label for each method description here -->
+                        </ui:VisualElement>
+                    </ui:ScrollView>
+                </ui:VisualElement>
+            </ui:ScrollView>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
