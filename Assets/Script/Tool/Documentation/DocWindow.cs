@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Linq;
+using UnityEditor.Callbacks;
 
 public class DocWindow : EditorWindow
 {
@@ -15,6 +16,8 @@ public class DocWindow : EditorWindow
     private VisualElement propertiesList;
     private VisualElement methodsList;
     private ClassDocumentationData selectedData;
+    
+    private Button selectedButton = null;
 
     private List<ClassDocumentationData>
         filteredDocumentation; // Stores the filtered documentation based on the search query
@@ -87,6 +90,8 @@ public class DocWindow : EditorWindow
         foreach (var classDoc in filteredDocumentation)
         {
             var classButton = new Button(() => SelectData(classDoc)) {text = classDoc.ClassType.Name};
+            classButton.name = classDoc.ClassType.Name; // Give each button a unique name
+            classButton.AddToClassList("button"); // Add the class to the button
             nameList.hierarchy.Add(classButton);
         }
         
@@ -135,6 +140,17 @@ public class DocWindow : EditorWindow
     
     private void SelectData(ClassDocumentationData data)
     {
+        // Unhighlight the previously selected button
+        if (selectedButton != null)
+        {
+            selectedButton.RemoveFromClassList("selected");
+        }
+
+        // Find the new selected button
+        selectedButton = nameList.Q<Button>(data.ClassType.Name);
+        // Highlight the new selected button
+        selectedButton.AddToClassList("selected");
+
         selectedData = data;
         RefreshDocumentation();
     }
@@ -159,7 +175,22 @@ public class DocWindow : EditorWindow
         foreach (var classDoc in filteredDocumentation)
         {
             var classButton = new Button(() => SelectData(classDoc)) {text = classDoc.ClassType.Name};
+            classButton.AddToClassList("button"); // Add the class to the button
             nameList.hierarchy.Add(classButton);
         }
     }
+    
+    [DidReloadScripts]
+    private static void OnScriptsReloaded()
+    {
+        // Refresh the documentation.
+        DocumentationManager.RefreshDocumentation();
+
+        // Find any open DocWindows and refresh them.
+        foreach (DocWindow window in Resources.FindObjectsOfTypeAll<DocWindow>())
+        {
+            window.RefreshDocumentation();
+        }
+    }
+
 }

@@ -13,6 +13,10 @@
     padding: 10px;
 }
 
+.left-scroll-view {
+    width: 300px;
+}
+
 .right-scroll-view {
     padding: 10px;
     flex-grow: 1;
@@ -48,19 +52,33 @@
 }
 
 .button {
+    width: 200px; /* Set a fixed width for your buttons */
     border: none;
-    background-color: #f0f0f0;
-    color: #000;
-    padding: 10px;
-    text-align: left;
-    align-items: flex-start;
+    background-color: #282828;
+    color: #ffffff;
+    padding: 10px 15px;
+    text-align: left; /* Left align the text */
+    align-items: center;
     justify-content: flex-start;
+    font-size: 14px;
+    border-radius: 0; /* Remove border radius for a flat, tab-like look */
+    transition: background-color 0.3s ease; /* Smooth transition for hover and selected states */
 }
 
 .button:hover {
-    background-color: #fd0000;
+    background-color: #383838;
 }
 
+.button.selected {
+    background-color: #383838;
+    font-weight: bold;
+}
 
+.text-button {
+    /* Your button styles here */
+}
 
-
+.text-button__text {
+    /* Your text styles here */
+    unity-text-align: left; /* Align text to the left */
+}
