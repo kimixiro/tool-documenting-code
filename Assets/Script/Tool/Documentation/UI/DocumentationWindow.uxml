@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
     <ui:VisualElement name="doc-window">
         <ui:VisualElement name="header" class="search-bar">
+            <ui:Button name="back-button" text="Back" style="width: 50px;"></ui:Button>
             <ui:Label text="Search" style="width: 50px;"></ui:Label>
             <ui:TextField name="search-query" style="flex-grow: 1;"></ui:TextField>
         </ui:VisualElement>

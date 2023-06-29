@@ -21,6 +21,8 @@ public class DocWindow : EditorWindow
 
     private List<ClassDocumentationData>
         filteredDocumentation; // Stores the filtered documentation based on the search query
+    
+    private Stack<ClassDocumentationData> history = new Stack<ClassDocumentationData>(); // Add this line
 
     [MenuItem("Window/DocWindow")]
     public static void ShowWindow()
@@ -33,6 +35,12 @@ public class DocWindow : EditorWindow
         SetupUIElements();
         PopulateNameList();
         RefreshDocumentation();
+        
+        Button backButton = rootVisualElement.Q<Button>("back-button");
+        if (backButton != null)
+        {
+            backButton.clicked += NavigateBack;
+        }
     }
 
     private void SetupUIElements()
@@ -147,9 +155,18 @@ public class DocWindow : EditorWindow
         }
 
         // Find the new selected button
-        selectedButton = nameList.Q<Button>(data.ClassType.Name);
-        // Highlight the new selected button
-        selectedButton.AddToClassList("selected");
+        Button newSelectedButton = nameList.Q<Button>(data.ClassType.Name);
+        if (newSelectedButton != null)
+        {
+            selectedButton = newSelectedButton;
+            // Highlight the new selected button
+            selectedButton.AddToClassList("selected");
+        }
+    
+        if (selectedData != null)
+        {
+            history.Push(selectedData);
+        }
 
         selectedData = data;
         RefreshDocumentation();
@@ -160,15 +177,28 @@ public class DocWindow : EditorWindow
         // Convert the search query to lowercase for case-insensitive comparison
         string lowercaseQuery = query.ToLower();
 
-        // Filter the documentation based on the search query
-        filteredDocumentation = DocumentationManager.Documentation.Where(classDoc =>
-        {
-            string allText = $"{classDoc.ClassType.Name} {classDoc.Description} " +
-                             $"{string.Join(" ", classDoc.MethodsData.Select(m => $"{m.Method.Name} {m.Description}"))} " +
-                             $"{string.Join(" ", classDoc.PropertiesData.Select(p => $"{p.Property.Name} {p.Description}"))}";
+        // Filter and score the documentation based on the search query
+        var scoredDocumentation = DocumentationManager.Documentation.Select(classDoc =>
+            {
+                string allText = $"{classDoc.ClassType.Name} {classDoc.Description} " +
+                                 $"{string.Join(" ", classDoc.MethodsData.Select(m => $"{m.Method.Name} {m.Description}"))} " +
+                                 $"{string.Join(" ", classDoc.PropertiesData.Select(p => $"{p.Property.Name} {p.Description}"))}";
 
-            return allText.ToLower().Contains(lowercaseQuery);
-        }).ToList();
+                int score = 0;
+                if (classDoc.ClassType.Name.ToLower().Contains(lowercaseQuery)) score += 100;
+                if (classDoc.MethodsData.Any(m => m.Method.Name.ToLower().Contains(lowercaseQuery))) score += 50;
+                if (classDoc.PropertiesData.Any(p => p.Property.Name.ToLower().Contains(lowercaseQuery))) score += 50;
+                if (allText.ToLower().Contains(lowercaseQuery)) score++;
+
+                return new { Doc = classDoc, Score = score };
+            })
+            .Where(scoredDoc => scoredDoc.Score > 0)  // Only include documents that match the query
+            .OrderByDescending(scoredDoc => scoredDoc.Score)  // Sort by score
+            .Select(scoredDoc => scoredDoc.Doc)  // Select the documentation
+            .ToList();
+
+        // Assign the filtered and scored documentation
+        filteredDocumentation = scoredDocumentation;
 
         // Clear and repopulate the name list
         nameList.hierarchy.Clear();
@@ -177,6 +207,20 @@ public class DocWindow : EditorWindow
             var classButton = new Button(() => SelectData(classDoc)) {text = classDoc.ClassType.Name};
             classButton.AddToClassList("button"); // Add the class to the button
             nameList.hierarchy.Add(classButton);
+        }
+        // Select first data if there are results
+        if (filteredDocumentation.Count > 0)
+        {
+            SelectData(filteredDocumentation[0]);
+        }
+    }
+
+    private void NavigateBack()
+    {
+        if (history.Count > 0)
+        {
+            ClassDocumentationData lastViewed = history.Pop();
+            SelectData(lastViewed);
         }
     }
     
