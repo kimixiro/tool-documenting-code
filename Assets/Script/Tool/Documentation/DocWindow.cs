@@ -4,6 +4,10 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using System.Linq;
 using UnityEditor.Callbacks;
+using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+using Debug = UnityEngine.Debug;
 
 public class DocWindow : EditorWindow
 {
@@ -16,12 +20,12 @@ public class DocWindow : EditorWindow
     private VisualElement propertiesList;
     private VisualElement methodsList;
     private ClassDocumentationData selectedData;
-    
+
     private Button selectedButton = null;
 
     private List<ClassDocumentationData>
         filteredDocumentation; // Stores the filtered documentation based on the search query
-    
+
     private Stack<ClassDocumentationData> history = new Stack<ClassDocumentationData>(); // Add this line
 
     [MenuItem("Window/DocWindow")]
@@ -35,7 +39,7 @@ public class DocWindow : EditorWindow
         SetupUIElements();
         PopulateNameList();
         RefreshDocumentation();
-        
+
         Button backButton = rootVisualElement.Q<Button>("back-button");
         if (backButton != null)
         {
@@ -102,7 +106,7 @@ public class DocWindow : EditorWindow
             classButton.AddToClassList("button"); // Add the class to the button
             nameList.hierarchy.Add(classButton);
         }
-        
+
         if (filteredDocumentation.Count > 0)
         {
             SelectData(filteredDocumentation[0]);
@@ -126,6 +130,7 @@ public class DocWindow : EditorWindow
             {
                 var propertyLabel = new Label(propertyData.Property.Name);
                 propertyLabel.AddToClassList("header");
+                propertyLabel.AddManipulator(new Clickable(() => OpenScriptAtLine(propertyData.Property))); // Add this line
                 var propertyDescription = new Label(propertyData.Description);
                 propertyDescription.AddToClassList("description");
 
@@ -137,6 +142,7 @@ public class DocWindow : EditorWindow
             {
                 var methodLabel = new Label(methodData.Method.Name);
                 methodLabel.AddToClassList("header");
+                methodLabel.AddManipulator(new Clickable(() => OpenScriptAtLine(methodData.Method))); // Add this line
                 var methodDescription = new Label(methodData.Description);
                 methodDescription.AddToClassList("description");
 
@@ -146,6 +152,34 @@ public class DocWindow : EditorWindow
         }
     }
     
+    private void OpenScriptAtLine(MemberInfo member)
+    {
+        var allScriptAssets = AssetDatabase.FindAssets("t:script");
+        string memberClassName = member.DeclaringType.Name;
+
+        TextAsset targetAsset = null;
+        foreach (var scriptAssetGUID in allScriptAssets)
+        {
+            string scriptAssetPath = AssetDatabase.GUIDToAssetPath(scriptAssetGUID);
+            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(scriptAssetPath);
+
+            if (fileNameWithoutExtension == memberClassName)
+            {
+                targetAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(scriptAssetPath);
+                break;
+            }
+        }
+
+        if (targetAsset == null)
+        {
+            Debug.LogError($"Failed to find script file for class {memberClassName}");
+            return;
+        }
+
+        AssetDatabase.OpenAsset(targetAsset);
+    }
+
+
     private void SelectData(ClassDocumentationData data)
     {
         // Unhighlight the previously selected button
@@ -162,7 +196,7 @@ public class DocWindow : EditorWindow
             // Highlight the new selected button
             selectedButton.AddToClassList("selected");
         }
-    
+
         if (selectedData != null)
         {
             history.Push(selectedData);
@@ -190,11 +224,11 @@ public class DocWindow : EditorWindow
                 if (classDoc.PropertiesData.Any(p => p.Property.Name.ToLower().Contains(lowercaseQuery))) score += 50;
                 if (allText.ToLower().Contains(lowercaseQuery)) score++;
 
-                return new { Doc = classDoc, Score = score };
+                return new {Doc = classDoc, Score = score};
             })
-            .Where(scoredDoc => scoredDoc.Score > 0)  // Only include documents that match the query
-            .OrderByDescending(scoredDoc => scoredDoc.Score)  // Sort by score
-            .Select(scoredDoc => scoredDoc.Doc)  // Select the documentation
+            .Where(scoredDoc => scoredDoc.Score > 0) // Only include documents that match the query
+            .OrderByDescending(scoredDoc => scoredDoc.Score) // Sort by score
+            .Select(scoredDoc => scoredDoc.Doc) // Select the documentation
             .ToList();
 
         // Assign the filtered and scored documentation
@@ -208,6 +242,7 @@ public class DocWindow : EditorWindow
             classButton.AddToClassList("button"); // Add the class to the button
             nameList.hierarchy.Add(classButton);
         }
+
         // Select first data if there are results
         if (filteredDocumentation.Count > 0)
         {
@@ -223,7 +258,7 @@ public class DocWindow : EditorWindow
             SelectData(lastViewed);
         }
     }
-    
+
     [DidReloadScripts]
     private static void OnScriptsReloaded()
     {
@@ -236,5 +271,4 @@ public class DocWindow : EditorWindow
             window.RefreshDocumentation();
         }
     }
-
 }
