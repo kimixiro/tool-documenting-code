@@ -15,13 +15,13 @@ public class DocWindow : EditorWindow
     private ScrollView leftScrollView;
     private ScrollView rightScrollView;
     private ListView nameList;
-    private Label name;
+    private Label classNameLabel;
     private Label description;
     private VisualElement propertiesList;
     private VisualElement methodsList;
     private ClassDocumentationData selectedData;
 
-    private Button selectedButton = null;
+    private Label selectedLabel = null;
 
     private List<ClassDocumentationData>
         filteredDocumentation; // Stores the filtered documentation based on the search query
@@ -80,10 +80,16 @@ public class DocWindow : EditorWindow
         leftScrollView = rootVisualElement.Q<ScrollView>("left-scroll-view");
         rightScrollView = rootVisualElement.Q<ScrollView>("right-scroll-view");
         nameList = leftScrollView.Q<ListView>("name-list");
-        name = rightScrollView.Q<Label>("class-name");
+        classNameLabel = rightScrollView.Q<Label>("class-name");
         description = rightScrollView.Q<Label>("class-description");
         propertiesList = rightScrollView.Q<VisualElement>("properties-list");
         methodsList = rightScrollView.Q<VisualElement>("methods-list");
+
+        leftScrollView.style.flexBasis = 300;
+
+        rightScrollView.style.flexDirection = FlexDirection.Row;
+        rightScrollView.style.flexGrow = 1;
+
 
         // Refresh documentation when search field changes
         searchField.RegisterValueChangedCallback(evt => FilterNameList(evt.newValue));
@@ -101,10 +107,11 @@ public class DocWindow : EditorWindow
 
         foreach (var classDoc in filteredDocumentation)
         {
-            var classButton = new Button(() => SelectData(classDoc)) {text = classDoc.ClassType.Name};
-            classButton.name = classDoc.ClassType.Name; // Give each button a unique name
-            classButton.AddToClassList("button"); // Add the class to the button
-            nameList.hierarchy.Add(classButton);
+            var classNameLabel = new Label(classDoc.ClassType.Name);
+            classNameLabel.name = classDoc.ClassType.Name; // Give each label a unique name
+            classNameLabel.AddToClassList("class-name-label"); // Add the class to the label
+            classNameLabel.AddManipulator(new Clickable(() => SelectData(classDoc))); // Make the label clickable
+            nameList.hierarchy.Add(classNameLabel);
         }
 
         if (filteredDocumentation.Count > 0)
@@ -116,21 +123,22 @@ public class DocWindow : EditorWindow
     private void RefreshDocumentation()
     {
         // Clear panes
-        name.text = "";
+        classNameLabel.text = "";
         description.text = "";
         propertiesList.Clear();
         methodsList.Clear();
 
         if (selectedData != null)
         {
-            name.text = selectedData.ClassType.Name;
+            classNameLabel.text = selectedData.ClassType.Name;
             description.text = selectedData.Description;
 
             foreach (var propertyData in selectedData.PropertiesData)
             {
                 var propertyLabel = new Label(propertyData.Property.Name);
                 propertyLabel.AddToClassList("header");
-                propertyLabel.AddManipulator(new Clickable(() => OpenScriptAtLine(propertyData.Property))); // Add this line
+                propertyLabel.AddManipulator(new Clickable(() =>
+                    OpenScriptAtLine(propertyData.Property))); // Add this line
                 var propertyDescription = new Label(propertyData.Description);
                 propertyDescription.AddToClassList("description");
 
@@ -151,7 +159,7 @@ public class DocWindow : EditorWindow
             }
         }
     }
-    
+
     private void OpenScriptAtLine(MemberInfo member)
     {
         var allScriptAssets = AssetDatabase.FindAssets("t:script");
@@ -182,29 +190,34 @@ public class DocWindow : EditorWindow
 
     private void SelectData(ClassDocumentationData data)
     {
-        // Unhighlight the previously selected button
-        if (selectedButton != null)
+        // Unhighlight the previously selected label
+        if (selectedLabel != null)
         {
-            selectedButton.RemoveFromClassList("selected");
+            selectedLabel.RemoveFromClassList("selected");
         }
 
-        // Find the new selected button
-        Button newSelectedButton = nameList.Q<Button>(data.ClassType.Name);
-        if (newSelectedButton != null)
+        // Find the label corresponding to the selected data in the name list
+        selectedLabel = nameList.Q<Label>(data.ClassType.Name);
+
+        // If the label was found, highlight it
+        if (selectedLabel != null)
         {
-            selectedButton = newSelectedButton;
-            // Highlight the new selected button
-            selectedButton.AddToClassList("selected");
+            selectedLabel.AddToClassList("selected");
         }
 
+        // Push the previously selected data to the history stack
         if (selectedData != null)
         {
             history.Push(selectedData);
         }
 
+        // Set the selected data
         selectedData = data;
+
+        // Refresh the documentation
         RefreshDocumentation();
     }
+
 
     private void FilterNameList(string query)
     {
@@ -214,15 +227,11 @@ public class DocWindow : EditorWindow
         // Filter and score the documentation based on the search query
         var scoredDocumentation = DocumentationManager.Documentation.Select(classDoc =>
             {
-                string allText = $"{classDoc.ClassType.Name} {classDoc.Description} " +
-                                 $"{string.Join(" ", classDoc.MethodsData.Select(m => $"{m.Method.Name} {m.Description}"))} " +
-                                 $"{string.Join(" ", classDoc.PropertiesData.Select(p => $"{p.Property.Name} {p.Description}"))}";
-
                 int score = 0;
-                if (classDoc.ClassType.Name.ToLower().Contains(lowercaseQuery)) score += 100;
-                if (classDoc.MethodsData.Any(m => m.Method.Name.ToLower().Contains(lowercaseQuery))) score += 50;
-                if (classDoc.PropertiesData.Any(p => p.Property.Name.ToLower().Contains(lowercaseQuery))) score += 50;
-                if (allText.ToLower().Contains(lowercaseQuery)) score++;
+                if (classDoc.ClassType.Name.ToLower().Contains(lowercaseQuery)) score += 1000;
+                if (classDoc.MethodsData.Any(m => m.Method.Name.ToLower().Contains(lowercaseQuery))) score += 500;
+                if (classDoc.PropertiesData.Any(p => p.Property.Name.ToLower().Contains(lowercaseQuery))) score += 500;
+                if (classDoc.Description.ToLower().Contains(lowercaseQuery)) score += 1;
 
                 return new {Doc = classDoc, Score = score};
             })
@@ -238,17 +247,52 @@ public class DocWindow : EditorWindow
         nameList.hierarchy.Clear();
         foreach (var classDoc in filteredDocumentation)
         {
-            var classButton = new Button(() => SelectData(classDoc)) {text = classDoc.ClassType.Name};
-            classButton.AddToClassList("button"); // Add the class to the button
-            nameList.hierarchy.Add(classButton);
+            var classNameLabel = new Label(classDoc.ClassType.Name);
+            classNameLabel.AddToClassList("class-name-label"); // Add the class to the label
+            classNameLabel.AddManipulator(new Clickable(() => SelectData(classDoc))); // Make the label clickable
+            nameList.hierarchy.Add(classNameLabel);
         }
 
-        // Select first data if there are results
-        if (filteredDocumentation.Count > 0)
+        // Unhighlight the previously selected label
+        if (selectedLabel != null)
         {
+            selectedLabel.RemoveFromClassList("selected");
+        }
+
+        if (filteredDocumentation.Contains(selectedData))
+        {
+            // Find the label corresponding to the selected data in the name list
+            selectedLabel = nameList.Q<Label>(selectedData.ClassType.Name);
+
+            // If the label was found, highlight it
+            if (selectedLabel != null)
+            {
+                selectedLabel.AddToClassList("selected");
+            }
+        }
+        else if (filteredDocumentation.Count > 0)
+        {
+            // If the selected data isn't in the filtered documentation, select the first data
             SelectData(filteredDocumentation[0]);
+
+            // Highlight the first label
+            if (nameList.Children().Any())
+            {
+                selectedLabel = nameList.Children().First() as Label;
+                if (selectedLabel != null)
+                {
+                    selectedLabel.AddToClassList("selected");
+                }
+            }
+        }
+        else
+        {
+            // If there is no filtered documentation, clear the selected data and label
+            selectedData = null;
+            selectedLabel = null;
         }
     }
+
 
     private void NavigateBack()
     {

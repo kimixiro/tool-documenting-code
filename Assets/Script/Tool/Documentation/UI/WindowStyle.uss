@@ -82,3 +82,16 @@
     /* Your text styles here */
     unity-text-align: left; /* Align text to the left */
 }
+
+.class-name-label {
+    /* Define your unselected label styles here. */
+    color: #ffffff;
+    font-size: 14px;
+    padding: 5px;
+}
+
+.class-name-label.selected {
+    /* Define your selected label styles here. */
+    color: #ffffff;
+    background-color: #007acc;
+}
