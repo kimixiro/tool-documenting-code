@@ -1,12 +1,37 @@
 .search-bar {
     flex-direction: row;
     padding: 10px;
-    flex-shrink: 0;
+    background-color: #282828;
+    color: #ffffff;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 50px; /* Fixed height */
+    flex-shrink: 0; /* Prevent it from shrinking */
+    overflow: hidden; /* Prevents children from extending beyond its bounds */
+}
+
+.search-field {
+    background-color: rgba(56, 56, 56, 1);
+    color: rgba(255, 255, 255, 1);
+    border: none;
+    padding: 5px;
+    border-radius: 5px;
+    flex-grow: 1;
+    height: 30px; /* Fixed height */
+    max-height: 30px; /* Maximum height */
+    overflow: hidden; /* Hides overflowing content */
+}
+
+.doc-window {
+    flex-direction: column;
+    height: 100%; /* To ensure it takes full height of its parent */
 }
 
 .content {
-    flex-direction: row;
-    flex-grow: 1;
+    flex-grow: 1; /* Allows content to take up remaining space */
+    flex-shrink: 1; /* Allows content to shrink if necessary */
+    overflow: scroll; /* To allow scrolling if content gets too big */
 }
 
 .scroll-view {
@@ -29,8 +54,8 @@
 }
 
 .header {
-    font-size: 18px;
     font-weight: bold;
+    flex-shrink: 0; 
 }
 
 .subheading {
@@ -46,31 +71,30 @@
     word-wrap: break-word;
 }
 
-.properties-list > *, .methods-list > * {
-    border-bottom: 1px solid #555;
-    padding: 5px;
+.properties-list > *,
+.methods-list > * {
+    margin-bottom: 10px;
 }
 
 .button {
-    width: 200px; /* Set a fixed width for your buttons */
+    background-color: rgba(255, 255, 255, 0);
+    color: rgba(255, 255, 255, 1);
     border: none;
-    background-color: #282828;
-    color: #ffffff;
-    padding: 10px 15px;
-    text-align: left; /* Left align the text */
-    align-items: center;
-    justify-content: flex-start;
+    padding: 10px;
+    cursor: arrow;
+    transition: background-color 0.3s ease;
     font-size: 14px;
-    border-radius: 0; /* Remove border radius for a flat, tab-like look */
-    transition: background-color 0.3s ease; /* Smooth transition for hover and selected states */
+    height: 30px; /* Fixed height */
+    max-height: 30px; /* Maximum height */
+    overflow: hidden; /* Hides overflowing content */
 }
 
 .button:hover {
-    background-color: #383838;
+    background-color: rgba(56, 56, 56, 1);
 }
 
 .button.selected {
-    background-color: #383838;
+    background-color: rgba(56, 56, 56, 1);
     font-weight: bold;
 }
 
