@@ -3,11 +3,9 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Linq;
-using UnityEditor.Callbacks;
-using System.Diagnostics;
-using System.IO;
 using System.Reflection;
-using Debug = UnityEngine.Debug;
+using System.IO;
+using UnityEditor.Callbacks;
 
 public class DocWindow : EditorWindow
 {
@@ -20,26 +18,47 @@ public class DocWindow : EditorWindow
     private VisualElement propertiesList;
     private VisualElement methodsList;
     private ClassDocumentationData selectedData;
-
     private Label selectedLabel = null;
-
-    private List<ClassDocumentationData>
-        filteredDocumentation; // Stores the filtered documentation based on the search query
-
-    private Stack<ClassDocumentationData> history = new Stack<ClassDocumentationData>(); // Add this line
+    private List<ClassDocumentationData> filteredDocumentation;
+    private Stack<ClassDocumentationData> history = new Stack<ClassDocumentationData>();
+    private Dictionary<string, Label> classLabels = new Dictionary<string, Label>();
 
     [MenuItem("Window/DocWindow")]
-    public static void ShowWindow()
-    {
-        GetWindow<DocWindow>("Documentation");
-    }
+    public static void ShowWindow() => GetWindow<DocWindow>("Documentation");
 
     public void OnEnable()
     {
         SetupUIElements();
         PopulateNameList();
         RefreshDocumentation();
+        AddButtonListener();
+    }
 
+    private void SetupUIElements()
+    {
+        SetupUXML();
+        SetupStyleSheet();
+        GetUIElements();
+        ConfigureElementsStyle();
+        RegisterSearchFieldCallback();
+    }
+
+    private void SetupUXML()
+    {
+        var visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Script/Tool/Documentation/UI/DocumentationWindow.uxml");
+        if (visualTree == null) Debug.LogError("UXML file not found. Make sure the path is correct.");
+        else visualTree.CloneTree(rootVisualElement);
+    }
+
+    private void SetupStyleSheet()
+    {
+        var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Script/Tool/Documentation/UI/WindowStyle.uss");
+        if (styleSheet == null) Debug.LogError("USS file not found. Make sure the path is correct.");
+        else rootVisualElement.styleSheets.Add(styleSheet);
+    }
+    
+    private void AddButtonListener()
+    {
         Button backButton = rootVisualElement.Q<Button>("back-button");
         if (backButton != null)
         {
@@ -47,35 +66,8 @@ public class DocWindow : EditorWindow
         }
     }
 
-    private void SetupUIElements()
+    private void GetUIElements()
     {
-        // Load the UXML file
-        var visualTree =
-            AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(
-                "Assets/Script/Tool/Documentation/UI/DocumentationWindow.uxml");
-        if (visualTree == null)
-        {
-            Debug.LogError("UXML file not found. Make sure the path is correct.");
-            return;
-        }
-
-        // Clone the UXML tree to the root visual element
-        visualTree.CloneTree(rootVisualElement);
-
-        // Load the USS file
-        var styleSheet =
-            AssetDatabase.LoadAssetAtPath<StyleSheet>(
-                "Assets/Script/Tool/Documentation/UI/WindowStyle.uss");
-        if (styleSheet == null)
-        {
-            Debug.LogError("USS file not found. Make sure the path is correct.");
-            return;
-        }
-
-        // Apply the style sheet to the root visual element
-        rootVisualElement.styleSheets.Add(styleSheet);
-
-        // Get the UI elements
         searchField = rootVisualElement.Q<TextField>("search-query");
         leftScrollView = rootVisualElement.Q<ScrollView>("left-scroll-view");
         rightScrollView = rootVisualElement.Q<ScrollView>("right-scroll-view");
@@ -84,80 +76,80 @@ public class DocWindow : EditorWindow
         description = rightScrollView.Q<Label>("class-description");
         propertiesList = rightScrollView.Q<VisualElement>("properties-list");
         methodsList = rightScrollView.Q<VisualElement>("methods-list");
+    }
 
+    private void ConfigureElementsStyle()
+    {
         leftScrollView.style.flexBasis = 300;
-
         rightScrollView.style.flexDirection = FlexDirection.Row;
         rightScrollView.style.flexGrow = 1;
-
-
-        // Refresh documentation when search field changes
-        searchField.RegisterValueChangedCallback(evt => FilterNameList(evt.newValue));
     }
+
+    private void RegisterSearchFieldCallback() => searchField.RegisterValueChangedCallback(evt => FilterNameList(evt.newValue));
 
     private void PopulateNameList()
     {
-        if (DocumentationManager.Documentation == null)
-        {
-            DocumentationManager.RefreshDocumentation();
-        }
-
-        // Initialize filtered documentation with all the classes
+        if (DocumentationManager.Documentation == null) DocumentationManager.RefreshDocumentation();
         filteredDocumentation = DocumentationManager.Documentation.ToList();
+        foreach (var classDoc in filteredDocumentation) AddLabelToNameList(classDoc);
+        if (filteredDocumentation.Any()) SelectData(filteredDocumentation.First());
+    }
 
-        foreach (var classDoc in filteredDocumentation)
-        {
-            var classNameLabel = new Label(classDoc.ClassType.Name);
-            classNameLabel.name = classDoc.ClassType.Name; // Give each label a unique name
-            classNameLabel.AddToClassList("class-name-label"); // Add the class to the label
-            classNameLabel.AddManipulator(new Clickable(() => SelectData(classDoc))); // Make the label clickable
-            nameList.hierarchy.Add(classNameLabel);
-        }
-
-        if (filteredDocumentation.Count > 0)
-        {
-            SelectData(filteredDocumentation[0]);
-        }
+    private void AddLabelToNameList(ClassDocumentationData classDoc)
+    {
+        var classNameLabel = new Label(classDoc.ClassType.Name) {name = classDoc.ClassType.Name};
+        classNameLabel.AddToClassList("class-name-label");
+        classNameLabel.AddManipulator(new Clickable(() => SelectData(classDoc)));
+        nameList.hierarchy.Add(classNameLabel);
+        classLabels[classDoc.ClassType.Name] = classNameLabel; 
     }
 
     private void RefreshDocumentation()
     {
-        // Clear panes
+        ClearPanes();
+        if (selectedData == null) return;
+        PopulateDocumentationPanes();
+    }
+
+    private void ClearPanes()
+    {
         classNameLabel.text = "";
         description.text = "";
         propertiesList.Clear();
         methodsList.Clear();
+    }
 
-        if (selectedData != null)
-        {
-            classNameLabel.text = selectedData.ClassType.Name;
-            description.text = selectedData.Description;
+    private void PopulateDocumentationPanes()
+    {
+        classNameLabel.text = selectedData.ClassType.Name;
+        description.text = selectedData.Description;
+        foreach (var propertyData in selectedData.PropertiesData) AddPropertyToPropertiesList(propertyData);
+        foreach (var methodData in selectedData.MethodsData) AddMethodToMethodsList(methodData);
+    }
 
-            foreach (var propertyData in selectedData.PropertiesData)
-            {
-                var propertyLabel = new Label(propertyData.Property.Name);
-                propertyLabel.AddToClassList("header");
-                propertyLabel.AddManipulator(new Clickable(() =>
-                    OpenScriptAtLine(propertyData.Property))); // Add this line
-                var propertyDescription = new Label(propertyData.Description);
-                propertyDescription.AddToClassList("description");
+    private void AddPropertyToPropertiesList(PropertyDocumentationData propertyData)
+    {
+        var propertyLabel = CreateLabel(propertyData.Property.Name, "header");
+        propertyLabel.AddManipulator(new Clickable(() => OpenScriptAtLine(propertyData.Property)));
+        var propertyDescription = CreateLabel(propertyData.Description, "description");
+        propertiesList.Add(propertyLabel);
+        propertiesList.Add(propertyDescription);
+    }
 
-                propertiesList.Add(propertyLabel);
-                propertiesList.Add(propertyDescription);
-            }
+    private Label CreateLabel(string text, string styleClass)
+    {
+        var label = new Label(text);
+        label.AddToClassList(styleClass);
+        return label;
+    }
 
-            foreach (var methodData in selectedData.MethodsData)
-            {
-                var methodLabel = new Label(methodData.Method.Name);
-                methodLabel.AddToClassList("header");
-                methodLabel.AddManipulator(new Clickable(() => OpenScriptAtLine(methodData.Method))); // Add this line
-                var methodDescription = new Label(methodData.Description);
-                methodDescription.AddToClassList("description");
-
-                methodsList.Add(methodLabel);
-                methodsList.Add(methodDescription);
-            }
-        }
+    private void AddMethodToMethodsList(MethodDocumentationData methodData)
+    {
+        var methodLabel = CreateLabel(methodData.Method.Name, "header");
+        methodLabel.AddManipulator(new Clickable(() => OpenScriptAtLine(methodData.Method)));
+        var methodDescription = CreateLabel(methodData.Description, "description");
+        methodsList.Add(methodLabel);
+        methodsList.Add(methodDescription);
     }
 
     private void OpenScriptAtLine(MemberInfo member)
@@ -165,134 +157,117 @@ public class DocWindow : EditorWindow
         var allScriptAssets = AssetDatabase.FindAssets("t:script");
         string memberClassName = member.DeclaringType.Name;
 
-        TextAsset targetAsset = null;
-        foreach (var scriptAssetGUID in allScriptAssets)
-        {
-            string scriptAssetPath = AssetDatabase.GUIDToAssetPath(scriptAssetGUID);
-            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(scriptAssetPath);
+        TextAsset targetAsset = allScriptAssets
+            .Select(scriptAssetGUID => AssetDatabase.GUIDToAssetPath(scriptAssetGUID))
+            .Where(scriptAssetPath => Path.GetFileNameWithoutExtension(scriptAssetPath) == memberClassName)
+            .Select(scriptAssetPath => AssetDatabase.LoadAssetAtPath<TextAsset>(scriptAssetPath))
+            .FirstOrDefault();
 
-            if (fileNameWithoutExtension == memberClassName)
-            {
-                targetAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(scriptAssetPath);
-                break;
-            }
-        }
-
-        if (targetAsset == null)
-        {
-            Debug.LogError($"Failed to find script file for class {memberClassName}");
-            return;
-        }
-
-        AssetDatabase.OpenAsset(targetAsset);
+        if (targetAsset == null) Debug.LogError($"Failed to find script file for class {memberClassName}");
+        else AssetDatabase.OpenAsset(targetAsset);
     }
-
 
     private void SelectData(ClassDocumentationData data)
     {
-        // Unhighlight the previously selected label
-        if (selectedLabel != null)
-        {
-            selectedLabel.RemoveFromClassList("selected");
-        }
-
-        // Find the label corresponding to the selected data in the name list
-        selectedLabel = nameList.Q<Label>(data.ClassType.Name);
-
-        // If the label was found, highlight it
-        if (selectedLabel != null)
-        {
-            selectedLabel.AddToClassList("selected");
-        }
-
-        // Push the previously selected data to the history stack
-        if (selectedData != null)
-        {
-            history.Push(selectedData);
-        }
-
-        // Set the selected data
+        UnhighlightLabel();
+        selectedLabel = FindLabelForSelectedData(data);
+        if (selectedLabel != null) selectedLabel.AddToClassList("selected");
+        PushToHistory();
         selectedData = data;
-
-        // Refresh the documentation
         RefreshDocumentation();
     }
 
+    private void UnhighlightLabel()
+    {
+        if (selectedLabel != null) selectedLabel.RemoveFromClassList("selected");
+    }
+
+    private Label FindLabelForSelectedData(ClassDocumentationData data) => nameList.Q<Label>(data.ClassType.Name);
+
+    private void PushToHistory()
+    {
+        if (selectedData != null) history.Push(selectedData);
+    }
 
     private void FilterNameList(string query)
     {
-        // Convert the search query to lowercase for case-insensitive comparison
         string lowercaseQuery = query.ToLower();
+        FilterAndScoreDocumentation(lowercaseQuery);
+        ClearAndRepopulateNameList();
+        ManageSelectedDataAfterFiltering();
+    }
 
-        // Filter and score the documentation based on the search query
-        var scoredDocumentation = DocumentationManager.Documentation.Select(classDoc =>
-            {
-                int score = 0;
-                if (classDoc.ClassType.Name.ToLower().Contains(lowercaseQuery)) score += 1000;
-                if (classDoc.MethodsData.Any(m => m.Method.Name.ToLower().Contains(lowercaseQuery))) score += 500;
-                if (classDoc.PropertiesData.Any(p => p.Property.Name.ToLower().Contains(lowercaseQuery))) score += 500;
-                if (classDoc.Description.ToLower().Contains(lowercaseQuery)) score += 1;
-
-                return new {Doc = classDoc, Score = score};
-            })
-            .Where(scoredDoc => scoredDoc.Score > 0) // Only include documents that match the query
-            .OrderByDescending(scoredDoc => scoredDoc.Score) // Sort by score
-            .Select(scoredDoc => scoredDoc.Doc) // Select the documentation
+    private void FilterAndScoreDocumentation(string lowercaseQuery)
+    {
+        filteredDocumentation = DocumentationManager.Documentation
+            .Select(classDoc => new {Doc = classDoc, Score = ScoreDocumentation(classDoc, lowercaseQuery)})
+            .Where(scoredDoc => scoredDoc.Score > 0)
+            .OrderByDescending(scoredDoc => scoredDoc.Score)
+            .Select(scoredDoc => scoredDoc.Doc)
             .ToList();
+    }
 
-        // Assign the filtered and scored documentation
-        filteredDocumentation = scoredDocumentation;
+    private int ScoreDocumentation(ClassDocumentationData classDoc, string query)
+    {
+        int score = 0;
+        if (classDoc.ClassType.Name.ToLower().Contains(query)) score += 1000;
+        if (classDoc.MethodsData.Any(m => m.Method.Name.ToLower().Contains(query))) score += 500;
+        if (classDoc.PropertiesData.Any(p => p.Property.Name.ToLower().Contains(query))) score += 500;
+        if (classDoc.Description.ToLower().Contains(query)) score += 1;
+        return score;
+    }
 
-        // Clear and repopulate the name list
+    private void ClearAndRepopulateNameList()
+    {
         nameList.hierarchy.Clear();
         foreach (var classDoc in filteredDocumentation)
         {
-            var classNameLabel = new Label(classDoc.ClassType.Name);
-            classNameLabel.AddToClassList("class-name-label"); // Add the class to the label
-            classNameLabel.AddManipulator(new Clickable(() => SelectData(classDoc))); // Make the label clickable
-            nameList.hierarchy.Add(classNameLabel);
-        }
-
-        // Unhighlight the previously selected label
-        if (selectedLabel != null)
-        {
-            selectedLabel.RemoveFromClassList("selected");
-        }
-
-        if (filteredDocumentation.Contains(selectedData))
-        {
-            // Find the label corresponding to the selected data in the name list
-            selectedLabel = nameList.Q<Label>(selectedData.ClassType.Name);
-
-            // If the label was found, highlight it
-            if (selectedLabel != null)
+            if (classLabels.TryGetValue(classDoc.ClassType.Name, out var label)) // use class name as key
             {
-                selectedLabel.AddToClassList("selected");
+                nameList.hierarchy.Add(label);
             }
-        }
-        else if (filteredDocumentation.Count > 0)
-        {
-            // If the selected data isn't in the filtered documentation, select the first data
-            SelectData(filteredDocumentation[0]);
-
-            // Highlight the first label
-            if (nameList.Children().Any())
+            else
             {
-                selectedLabel = nameList.Children().First() as Label;
-                if (selectedLabel != null)
-                {
-                    selectedLabel.AddToClassList("selected");
-                }
+                Debug.LogError($"Failed to find cached label for {classDoc.ClassType.Name}");
             }
-        }
-        else
-        {
-            // If there is no filtered documentation, clear the selected data and label
-            selectedData = null;
-            selectedLabel = null;
         }
     }
 
+    private void ManageSelectedDataAfterFiltering()
+    {
+        UnhighlightLabel();
+        if (!filteredDocumentation.Contains(selectedData)) SelectFirstDataInFilteredDocumentation();
+        else HighlightLabelInFilteredDocumentation();
+    }
+
+    private void SelectFirstDataInFilteredDocumentation()
+    {
+        if (filteredDocumentation.Count > 0)
+        {
+            SelectData(filteredDocumentation[0]);
+            HighlightFirstLabel();
+        }
+        else ClearSelectedDataAndLabel();
+    }
+
+    private void HighlightFirstLabel()
+    {
+        if (!nameList.Children().Any()) return;
+        selectedLabel = nameList.Children().First() as Label;
+        selectedLabel?.AddToClassList("selected");
+    }
+
+    private void ClearSelectedDataAndLabel()
+    {
+        selectedData = null;
+        selectedLabel = null;
+    }
+
+    private void HighlightLabelInFilteredDocumentation()
+    {
+        selectedLabel = nameList.Q<Label>(selectedData.ClassType.Name);
+        selectedLabel?.AddToClassList("selected");
+    }
 
     private void NavigateBack()
     {
@@ -306,13 +281,8 @@ public class DocWindow : EditorWindow
     [DidReloadScripts]
     private static void OnScriptsReloaded()
     {
-        // Refresh the documentation.
         DocumentationManager.RefreshDocumentation();
-
-        // Find any open DocWindows and refresh them.
-        foreach (DocWindow window in Resources.FindObjectsOfTypeAll<DocWindow>())
-        {
-            window.RefreshDocumentation();
-        }
+        var windows = Resources.FindObjectsOfTypeAll<DocWindow>();
+        foreach (DocWindow window in windows) window.RefreshDocumentation();
     }
 }
