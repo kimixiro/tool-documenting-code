@@ -15,6 +15,8 @@ public class DocWindow : EditorWindow
     private ListView nameList;
     private Label classNameLabel;
     private Label description;
+    private Label fieldsHeading;
+    private Label methodsHeading;
     private VisualElement propertiesList;
     private VisualElement methodsList;
     private ClassDocumentationData selectedData;
@@ -76,6 +78,8 @@ public class DocWindow : EditorWindow
         description = rightScrollView.Q<Label>("class-description");
         propertiesList = rightScrollView.Q<VisualElement>("properties-list");
         methodsList = rightScrollView.Q<VisualElement>("methods-list");
+        fieldsHeading = rightScrollView.Q<Label>("fields-heading");
+        methodsHeading = rightScrollView.Q<Label>("methods-heading");
     }
 
     private void ConfigureElementsStyle()
@@ -123,10 +127,42 @@ public class DocWindow : EditorWindow
     {
         classNameLabel.text = selectedData.ClassType.Name;
         description.text = selectedData.Description;
-        foreach (var propertyData in selectedData.PropertiesData) AddPropertyToPropertiesList(propertyData);
-        foreach (var methodData in selectedData.MethodsData) AddMethodToMethodsList(methodData);
+
+        if (selectedData.PropertiesData.Any())
+        {
+            ShowElement(propertiesList);
+            ShowElement(fieldsHeading);
+            foreach (var propertyData in selectedData.PropertiesData) AddPropertyToPropertiesList(propertyData);
+        }
+        else
+        {
+            HideElement(propertiesList);
+            HideElement(fieldsHeading);
+        }
+
+        if (selectedData.MethodsData.Any())
+        {
+            ShowElement(methodsList);
+            ShowElement(methodsHeading);
+            foreach (var methodData in selectedData.MethodsData) AddMethodToMethodsList(methodData);
+        }
+        else
+        {
+            HideElement(methodsList);
+            HideElement(methodsHeading);
+        }
+    }
+    
+    private void HideElement(VisualElement element)
+    {
+        element.style.display = DisplayStyle.None;
     }
 
+    private void ShowElement(VisualElement element)
+    {
+        element.style.display = DisplayStyle.Flex;
+    }
+    
     private void AddPropertyToPropertiesList(PropertyDocumentationData propertyData)
     {
         var propertyLabel = CreateLabel(propertyData.Property.Name + " ➤", "header");

@@ -44,7 +44,7 @@ public static class DocumentationCollector
     /// <returns>A list of method documentation data.</returns>
     private static List<MethodDocumentationData> GetMethodDocumentationData(Type type)
     {
-        return type.GetMethods()
+        return type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
             .Select(m => new {Method = m, Attribute = GetAttribute<DocAttribute>(m)})
             .Where(x => x.Attribute != null)
             .Select(x => new MethodDocumentationData(x.Method, x.Attribute.Description))
@@ -58,7 +58,7 @@ public static class DocumentationCollector
     /// <returns>A list of property documentation data.</returns>
     private static List<PropertyDocumentationData> GetPropertyDocumentationData(Type type)
     {
-        return type.GetProperties()
+        return type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
             .Select(p => new {Property = p, Attribute = GetAttribute<DocAttribute>(p)})
             .Where(x => x.Attribute != null)
             .Select(x => new PropertyDocumentationData(x.Property, x.Attribute.Description))

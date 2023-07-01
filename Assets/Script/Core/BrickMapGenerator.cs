@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[Doc("Class to generate the brick map.")]
+[Doc("This class generates a grid of bricks, manages their creation, color, and destruction.")]
 public class BrickMapGenerator
 {
     private GameObject brickPrefab;
@@ -11,10 +11,9 @@ public class BrickMapGenerator
     private float y_min = 8f;
     private float y_max = 16f;
 
-    private int gridRows = 5; // Number of rows of bricks
-    private int gridColumns = 10; // Number of columns of bricks
+    private int gridRows = 5; 
+    private int gridColumns = 10;
 
-    // Add color array
     private Color[] colors = new Color[] {
         Color.red,
         Color.green,
@@ -23,14 +22,14 @@ public class BrickMapGenerator
         Color.magenta,
         Color.cyan
     };
-
+    
     public BrickMapGenerator(GameObject brickPrefab, Transform brickContainer)
     {
         this.brickPrefab = brickPrefab;
         this.brickContainer = brickContainer;
     }
-
-    [Doc("Creates the bricks at the start of the game.")]
+    
+    [Doc("Creates a grid of bricks with random colors within specified bounds.")]
     public void CreateBricks()
     {
         System.Random rand = new System.Random();
@@ -49,13 +48,12 @@ public class BrickMapGenerator
 
                 GameObject brick = Object.Instantiate(brickPrefab, position, Quaternion.identity, brickContainer);
 
-                // Update the brick color randomly
                 brick.GetComponent<Renderer>().material.color = colors[rand.Next(colors.Length)];
             }
         }
     }
-
-    [Doc("Destroys the bricks when the game ends.")]
+    
+    [Doc("Destroys all bricks in the specified brick container.")]
     public void DestroyBricks()
     {
         foreach (Transform brick in brickContainer)
@@ -64,3 +62,4 @@ public class BrickMapGenerator
         }
     }
 }
+

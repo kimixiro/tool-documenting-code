@@ -1,10 +1,11 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-[Doc("Singleton class to manage the overall game state.")]
+
+[Doc("This class manages the overall game state including starting and ending the game, keeping score, and managing game objects.")]
 public class GameManager : MonoBehaviour
 {
-    [Doc("Provides access to the singleton instance of this class.")]
+    [Doc("Singleton instance of the GameManager.")]
     public static GameManager Instance { get; private set; }
 
     [Doc("The current score of the game.")]
@@ -17,8 +18,7 @@ public class GameManager : MonoBehaviour
 
     private BrickMapGenerator brickMapGenerator;
     private bool isGameActive = false;
-    
-    [Doc("Singleton pattern implementation. If another instance exists, it gets destroyed.")]
+
     private void Awake()
     {
         if (Instance == null)
@@ -32,13 +32,12 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    [Doc("Starts the game when this script's object is enabled.")]
     private void Start()
     {
         StartGame();
     }
 
-    [Doc("Starts the game by setting up the score, paddle, ball, and bricks.")]
+    [Doc("Starts a new game, resetting score and enabling game objects.")]
     public void StartGame()
     {
         Score = 0;
@@ -49,8 +48,7 @@ public class GameManager : MonoBehaviour
         ball.Launch();
     }
 
-
-    [Doc("Ends the game by disabling the paddle, ball, and destroying the bricks.")]
+    [Doc("Ends the current game, disabling game objects and clearing the play field.")]
     public void EndGame()
     {
         isGameActive = false;
@@ -59,7 +57,6 @@ public class GameManager : MonoBehaviour
         brickMapGenerator.DestroyBricks();
     }
 
-    [Doc("Checks for the user's input to launch the ball.")]
     private void Update()
     {
         if (!isGameActive)
@@ -73,23 +70,16 @@ public class GameManager : MonoBehaviour
         CheckBallOutOfBounds();
     }
 
-    
-    [Doc("Checks whether the ball has gone off-screen.")]
     private void CheckBallOutOfBounds()
     {
         if (ball.transform.position.y < paddle.transform.position.y - 1)
         {
-            // Reset the ball and the paddle
             ball.Reset();
             paddle.Reset();
-
-            // Optionally, you could also end the game or decrease a life counter
-            // EndGame();
-            // DecreaseLife();
         }
     }
 
-    [Doc("Increases the score by a given amount.")]
+    [Doc("Increments the current game score by the specified points.")]
     public void IncrementScore(int points)
     {
         Score += points;

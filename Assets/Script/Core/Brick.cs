@@ -1,9 +1,8 @@
 using UnityEngine;
 
-[Doc("Class representing a brick in the game. Can be destroyed by the ball.")]
+[Doc("This class represents a brick in the game, handling its destruction.")]
 public class Brick : MonoBehaviour
 {
-    [Doc("Destroys the brick when the ball collides with it.")]
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Ball"))
@@ -12,10 +11,11 @@ public class Brick : MonoBehaviour
         }
     }
 
-    [Doc("Destroys the brick and increments the player's score.")]
+    [Doc("Destroys the brick and increments the game score.")]
     public void DestroyBrick()
     {
         GameManager.Instance.IncrementScore(1);
         Destroy(gameObject);
     }
 }
+
