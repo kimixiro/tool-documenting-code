@@ -6,9 +6,9 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    height: 50px; /* Fixed height */
-    flex-shrink: 0; /* Prevent it from shrinking */
-    overflow: hidden; /* Prevents children from extending beyond its bounds */
+    height: 50px;
+    flex-shrink: 0; 
+    overflow: hidden;
 }
 
 .search-field {
@@ -18,20 +18,20 @@
     padding: 5px;
     border-radius: 5px;
     flex-grow: 1;
-    height: 30px; /* Fixed height */
-    max-height: 30px; /* Maximum height */
-    overflow: hidden; /* Hides overflowing content */
+    height: 30px; 
+    max-height: 30px;
+    overflow: hidden;
 }
 
 .doc-window {
     flex-direction: column;
-    height: 100%; /* To ensure it takes full height of its parent */
+    height: 100%; 
 }
 
 .content {
-    flex-grow: 1; /* Allows content to take up remaining space */
-    flex-shrink: 1; /* Allows content to shrink if necessary */
-    overflow: scroll; /* To allow scrolling if content gets too big */
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow: scroll; 
 }
 
 .scroll-view {
@@ -58,11 +58,11 @@
     font-size: 18px;
     -unity-font-style: bold;
     flex-shrink: 0;
-    cursor: arrow;  /* Changes the mouse cursor when hovering over the element */
+    cursor: arrow;
 }
 
 .header:hover {
-    color: #00aaff; /* Changes the color when hovering over the element */
+    color: #00aaff;
 }
 
 .subheading {
@@ -97,9 +97,9 @@
     cursor: arrow;
     transition: background-color 0.3s ease;
     font-size: 14px;
-    height: 30px; /* Fixed height */
-    max-height: 30px; /* Maximum height */
-    overflow: hidden; /* Hides overflowing content */
+    height: 30px; 
+    max-height: 30px; 
+    overflow: hidden;
 }
 
 .button:hover {
@@ -111,24 +111,17 @@
     -unity-font-style: bold;
 }
 
-.text-button {
-    /* Your button styles here */
-}
-
 .text-button__text {
-    /* Your text styles here */
-    unity-text-align: left; /* Align text to the left */
+    unity-text-align: left; 
 }
 
 .class-name-label {
-    /* Define your unselected label styles here. */
     color: #ffffff;
     font-size: 14px;
     padding: 5px;
 }
 
 .class-name-label.selected {
-    /* Define your selected label styles here. */
     color: #ffffff;
     background-color: #007acc;
 }

@@ -237,7 +237,7 @@ public class DocWindow : EditorWindow
         nameList.hierarchy.Clear();
         foreach (var classDoc in filteredDocumentation)
         {
-            if (classLabels.TryGetValue(classDoc.ClassType.Name, out var label)) // use class name as key
+            if (classLabels.TryGetValue(classDoc.ClassType.Name, out var label))
             {
                 nameList.hierarchy.Add(label);
             }
