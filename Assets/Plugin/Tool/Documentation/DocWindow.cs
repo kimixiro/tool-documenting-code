@@ -45,14 +45,14 @@ public class DocWindow : EditorWindow
 
     private void SetupUXML()
     {
-        var visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Script/Tool/Documentation/UI/DocumentationWindow.uxml");
+        var visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Plugin/Tool/Documentation/UI/DocumentationWindow.uxml");
         if (visualTree == null) Debug.LogError("UXML file not found. Make sure the path is correct.");
         else visualTree.CloneTree(rootVisualElement);
     }
 
     private void SetupStyleSheet()
     {
-        var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Script/Tool/Documentation/UI/WindowStyle.uss");
+        var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Plugin/Tool/Documentation/UI/WindowStyle.uss");
         if (styleSheet == null) Debug.LogError("USS file not found. Make sure the path is correct.");
         else rootVisualElement.styleSheets.Add(styleSheet);
     }
