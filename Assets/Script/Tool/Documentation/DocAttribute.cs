@@ -1,12 +1,22 @@
 using System;
 
+/// <summary>
+/// An attribute used to provide a description for classes, methods, and properties.
+/// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method | AttributeTargets.Property)]
 public class DocAttribute : Attribute
 {
-    public string Description { get; private set; }
+    /// <summary>
+    /// The description of the attribute's target.
+    /// </summary>
+    public string Description { get; }
 
+    /// <summary>
+    /// Constructs a new DocAttribute with the given description.
+    /// </summary>
+    /// <param name="description">The description for the attribute's target.</param>
     public DocAttribute(string description)
     {
-        Description = description;
+        Description = description ?? throw new ArgumentNullException(nameof(description));
     }
 }

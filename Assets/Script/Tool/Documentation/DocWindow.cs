@@ -23,7 +23,7 @@ public class DocWindow : EditorWindow
     private Stack<ClassDocumentationData> history = new Stack<ClassDocumentationData>();
     private Dictionary<string, Label> classLabels = new Dictionary<string, Label>();
 
-    [MenuItem("Window/DocWindow")]
+    [MenuItem("Window/Documentation")]
     public static void ShowWindow() => GetWindow<DocWindow>("Documentation");
 
     public void OnEnable()
@@ -191,30 +191,9 @@ public class DocWindow : EditorWindow
 
     private void FilterNameList(string query)
     {
-        string lowercaseQuery = query.ToLower();
-        FilterAndScoreDocumentation(lowercaseQuery);
+        filteredDocumentation = SearchManager.FilterAndScoreDocumentation(query, DocumentationManager.Documentation);
         ClearAndRepopulateNameList();
         ManageSelectedDataAfterFiltering();
-    }
-
-    private void FilterAndScoreDocumentation(string lowercaseQuery)
-    {
-        filteredDocumentation = DocumentationManager.Documentation
-            .Select(classDoc => new {Doc = classDoc, Score = ScoreDocumentation(classDoc, lowercaseQuery)})
-            .Where(scoredDoc => scoredDoc.Score > 0)
-            .OrderByDescending(scoredDoc => scoredDoc.Score)
-            .Select(scoredDoc => scoredDoc.Doc)
-            .ToList();
-    }
-
-    private int ScoreDocumentation(ClassDocumentationData classDoc, string query)
-    {
-        int score = 0;
-        if (classDoc.ClassType.Name.ToLower().Contains(query)) score += 1000;
-        if (classDoc.MethodsData.Any(m => m.Method.Name.ToLower().Contains(query))) score += 500;
-        if (classDoc.PropertiesData.Any(p => p.Property.Name.ToLower().Contains(query))) score += 500;
-        if (classDoc.Description.ToLower().Contains(query)) score += 1;
-        return score;
     }
 
     private void ClearAndRepopulateNameList()
