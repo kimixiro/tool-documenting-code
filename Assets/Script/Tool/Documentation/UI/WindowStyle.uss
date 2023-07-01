@@ -49,26 +49,39 @@
 
 .main-header {
     font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 10px;
+    -unity-font-style: initial;
+    margin-bottom: 4px;
 }
 
 .header {
-    font-weight: bold;
-    flex-shrink: 0; 
+    margin-bottom: 4px;
+    font-size: 18px;
+    -unity-font-style: bold;
+    flex-shrink: 0;
+    cursor: arrow;  /* Changes the mouse cursor when hovering over the element */
+}
+
+.header:hover {
+    color: #00aaff; /* Changes the color when hovering over the element */
 }
 
 .subheading {
     font-size: 20px;
-    font-weight: bold;
-    margin-top: 20px;
+    -unity-font-style: initial;
 }
 
 .description {
-    font-size: 14px;
-    margin-bottom: 20px;
+    font-size: 16px;
+    margin-bottom: 12px;
     white-space: normal;
     word-wrap: break-word;
+}
+
+.description-class {
+    font-size: 14px;
+    white-space: normal;
+    word-wrap: break-word;
+    margin-bottom: 20px;
 }
 
 .properties-list > *,
@@ -95,7 +108,7 @@
 
 .button.selected {
     background-color: rgba(56, 56, 56, 1);
-    font-weight: bold;
+    -unity-font-style: bold;
 }
 
 .text-button {

@@ -11,7 +11,7 @@
             <ui:ScrollView name="right-scroll-view" class="scroll-view">
                 <ui:VisualElement name="class-details">
                     <ui:Label name="class-name" class="main-header"></ui:Label>
-                    <ui:Label name="class-description" class="normal-text"></ui:Label>
+                    <ui:Label name="class-description" class="description-class"></ui:Label>
                     <ui:Label name="fields-heading" class="subheading" text="Fields"></ui:Label>
                     <ui:ScrollView name="properties-scroll-view" class="scroll-view">
                         <ui:VisualElement name="properties-list"></ui:VisualElement>
