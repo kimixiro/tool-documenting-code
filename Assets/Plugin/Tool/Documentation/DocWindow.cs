@@ -165,7 +165,7 @@ public class DocWindow : EditorWindow
     
     private void AddPropertyToPropertiesList(PropertyDocumentationData propertyData)
     {
-        var propertyLabel = CreateLabel(propertyData.Property.Name + " ➤", "header");
+        var propertyLabel = CreateLabel(propertyData.Property.Name, "header");
         propertyLabel.AddManipulator(new Clickable(() => OpenScriptAtLine(propertyData.Property)));
         var propertyDescription = CreateLabel(propertyData.Description, "description");
         propertiesList.Add(propertyLabel);
@@ -181,7 +181,7 @@ public class DocWindow : EditorWindow
 
     private void AddMethodToMethodsList(MethodDocumentationData methodData)
     {
-        var methodLabel = CreateLabel(methodData.Method.Name + " ➤", "header");
+        var methodLabel = CreateLabel(methodData.Method.Name, "header");
         methodLabel.AddManipulator(new Clickable(() => OpenScriptAtLine(methodData.Method)));
         var methodDescription = CreateLabel(methodData.Description, "description");
         methodsList.Add(methodLabel);

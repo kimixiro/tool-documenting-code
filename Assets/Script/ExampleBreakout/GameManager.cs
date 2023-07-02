@@ -5,7 +5,6 @@ using UnityEngine.SceneManagement;
 [Doc("This class manages the overall game state including starting and ending the game, keeping score, and managing game objects.")]
 public class GameManager : MonoBehaviour
 {
-    [Doc("Singleton instance of the GameManager.")]
     public static GameManager Instance { get; private set; }
 
     [Doc("The current score of the game.")]
