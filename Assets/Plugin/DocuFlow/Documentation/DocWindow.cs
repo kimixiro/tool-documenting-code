@@ -34,7 +34,7 @@ namespace Plugin.DocuFlow.Documentation
         public async void OnEnable()
         {
             SetupUIElements();
-            PopulateNameList();
+            await PopulateNameList();
             await RefreshDocumentationAsync();
             SearchManager.BuildTrie(DocumentationManager.Documentation);
             AddButtonListener();
@@ -95,9 +95,9 @@ namespace Plugin.DocuFlow.Documentation
 
         private void RegisterSearchFieldCallback() => searchField.RegisterValueChangedCallback(evt => FilterNameList(evt.newValue));
 
-        private void PopulateNameList()
+        private async Task PopulateNameList()
         {
-            if (DocumentationManager.Documentation == null) DocumentationManager.RefreshDocumentationAsync();
+            if (DocumentationManager.Documentation == null) await DocumentationManager.RefreshDocumentationAsync();
             filteredDocumentation = DocumentationManager.Documentation.ToList();
             foreach (var classDoc in filteredDocumentation) AddLabelToNameList(classDoc);
             if (filteredDocumentation.Any()) SelectData(filteredDocumentation.First());

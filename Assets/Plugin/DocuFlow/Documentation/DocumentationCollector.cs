@@ -45,13 +45,16 @@ namespace Plugin.DocuFlow.Documentation
         /// </summary>
         /// <param name="type">The type from which to extract method documentation data.</param>
         /// <returns>A list of method documentation data.</returns>
-        private static async Task<List<MethodDocumentationData>> GetMethodDocumentationDataAsync(Type type)
+        private static Task<List<MethodDocumentationData>> GetMethodDocumentationDataAsync(Type type)
         {
-            return type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                .Select(m => new {Method = m, Attribute = GetAttribute<DocAttribute>(m)})
-                .Where(x => x.Attribute != null)
-                .Select(x => new MethodDocumentationData(x.Method, x.Attribute.Description))
-                .ToList();
+            return Task.Run(() =>
+            {
+                return type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Select(m => new {Method = m, Attribute = GetAttribute<DocAttribute>(m)})
+                    .Where(x => x.Attribute != null)
+                    .Select(x => new MethodDocumentationData(x.Method, x.Attribute.Description))
+                    .ToList();
+            });
         }
 
         /// <summary>
@@ -59,13 +62,16 @@ namespace Plugin.DocuFlow.Documentation
         /// </summary>
         /// <param name="type">The type from which to extract property documentation data.</param>
         /// <returns>A list of property documentation data.</returns>
-        private static async Task<List<PropertyDocumentationData>> GetPropertyDocumentationDataAsync(Type type)
+        private static Task<List<PropertyDocumentationData>> GetPropertyDocumentationDataAsync(Type type)
         {
-            return type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                .Select(p => new {Property = p, Attribute = GetAttribute<DocAttribute>(p)})
-                .Where(x => x.Attribute != null)
-                .Select(x => new PropertyDocumentationData(x.Property, x.Attribute.Description))
-                .ToList();
+            return Task.Run(() =>
+            {
+                return type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Select(p => new {Property = p, Attribute = GetAttribute<DocAttribute>(p)})
+                    .Where(x => x.Attribute != null)
+                    .Select(x => new PropertyDocumentationData(x.Property, x.Attribute.Description))
+                    .ToList();
+            });
         }
 
         /// <summary>
