@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 public static class DocumentationCollector
 {
@@ -9,7 +10,7 @@ public static class DocumentationCollector
     /// Gets documentation data from all classes marked with a DocAttribute.
     /// </summary>
     /// <returns>A list of documentation data for each class marked with a DocAttribute.</returns>
-    public static List<ClassDocumentationData> GetDocumentation()
+    public static async Task<List<ClassDocumentationData>> GetDocumentationAsync()
     {
         var allTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes());
         var result = new List<ClassDocumentationData>();
@@ -21,12 +22,12 @@ public static class DocumentationCollector
 
             var classData = new ClassDocumentationData(type, classDocAttribute.Description);
 
-            foreach (var methodData in GetMethodDocumentationData(type))
+            foreach (var methodData in await GetMethodDocumentationDataAsync(type))
             {
                 classData.AddMethodData(methodData);
             }
 
-            foreach (var propertyData in GetPropertyDocumentationData(type))
+            foreach (var propertyData in await GetPropertyDocumentationDataAsync(type))
             {
                 classData.AddPropertyData(propertyData);
             }
@@ -42,7 +43,7 @@ public static class DocumentationCollector
     /// </summary>
     /// <param name="type">The type from which to extract method documentation data.</param>
     /// <returns>A list of method documentation data.</returns>
-    private static List<MethodDocumentationData> GetMethodDocumentationData(Type type)
+    private static async Task<List<MethodDocumentationData>> GetMethodDocumentationDataAsync(Type type)
     {
         return type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
             .Select(m => new {Method = m, Attribute = GetAttribute<DocAttribute>(m)})
@@ -56,7 +57,7 @@ public static class DocumentationCollector
     /// </summary>
     /// <param name="type">The type from which to extract property documentation data.</param>
     /// <returns>A list of property documentation data.</returns>
-    private static List<PropertyDocumentationData> GetPropertyDocumentationData(Type type)
+    private static async Task<List<PropertyDocumentationData>> GetPropertyDocumentationDataAsync(Type type)
     {
         return type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
             .Select(p => new {Property = p, Attribute = GetAttribute<DocAttribute>(p)})

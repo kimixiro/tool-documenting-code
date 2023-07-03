@@ -5,6 +5,7 @@ using UnityEngine.UIElements;
 using System.Linq;
 using System.Reflection;
 using System.IO;
+using System.Threading.Tasks;
 using UnityEditor.Callbacks;
 
 public class DocWindow : EditorWindow
@@ -28,11 +29,11 @@ public class DocWindow : EditorWindow
     [MenuItem("Window/Documentation")]
     public static void ShowWindow() => GetWindow<DocWindow>("Documentation");
 
-    public void OnEnable()
+    public async void OnEnable()
     {
         SetupUIElements();
         PopulateNameList();
-        RefreshDocumentation();
+        await RefreshDocumentationAsync();
         AddButtonListener();
     }
 
@@ -93,7 +94,7 @@ public class DocWindow : EditorWindow
 
     private void PopulateNameList()
     {
-        if (DocumentationManager.Documentation == null) DocumentationManager.RefreshDocumentation();
+        if (DocumentationManager.Documentation == null) DocumentationManager.RefreshDocumentationAsync();
         filteredDocumentation = DocumentationManager.Documentation.ToList();
         foreach (var classDoc in filteredDocumentation) AddLabelToNameList(classDoc);
         if (filteredDocumentation.Any()) SelectData(filteredDocumentation.First());
@@ -106,6 +107,12 @@ public class DocWindow : EditorWindow
         classNameLabel.AddManipulator(new Clickable(() => SelectData(classDoc)));
         nameList.hierarchy.Add(classNameLabel);
         classLabels[classDoc.ClassType.Name] = classNameLabel; 
+    }
+    
+    private async Task RefreshDocumentationAsync()
+    {
+        await DocumentationManager.RefreshDocumentationAsync();
+        RefreshDocumentation();
     }
 
     private void RefreshDocumentation()
@@ -294,9 +301,9 @@ public class DocWindow : EditorWindow
     }
 
     [DidReloadScripts]
-    private static void OnScriptsReloaded()
+    private static async void OnScriptsReloaded()
     {
-        DocumentationManager.RefreshDocumentation();
+        await DocumentationManager.RefreshDocumentationAsync();
         var windows = Resources.FindObjectsOfTypeAll<DocWindow>();
         foreach (DocWindow window in windows) window.RefreshDocumentation();
     }
